@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -47,18 +50,28 @@ jobs:
 
       - name: Build Android Debug APK
         working-directory: android
-        run: |
-          ./gradlew assembleDebug --no-daemon 2>&1 | tee ../gradle.log || { echo "=== GRADLE ERROR ==="; tail -n 80 ../gradle.log; exit 1; }
+        run: ./gradlew assembleDebug --no-daemon
 
-      - name: Upload DNC MUSIC APK
+      - name: Prepare APK for Release
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk dnc-music-v1.0.apk
+
+      - name: Upload DNC MUSIC APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DNC-MUSIC-Debug-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: dnc-music-v1.0.apk
 
-      - name: Upload Error Log on Failure
-        if: failure()
-        uses: actions/upload-artifact@v4
+      - name: Publish Official GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: gradle-error-log
-          path: gradle.log
+          tag_name: v1.0.0
+          name: "DNC MUSIC v1.0.0 (Android APK)"
+          body: |
+            ## 🎸 DNC MUSIC - Sahne & Repertuvar Sistemi
+            Müzisyenler için özel tasarlanmış profesyonel sahne konsolu ve repertuvar sistemi.
+            
+            ### 📲 İndirme:
+            Aşağıdaki **`dnc-music-v1.0.apk`** dosyasına tıklayarak doğrudan telefonunuza indirebilirsiniz!
+          files: dnc-music-v1.0.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
