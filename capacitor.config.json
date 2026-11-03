@@ -1,0 +1,9 @@
+{
+  "appId": "com.dncmusic.app",
+  "appName": "DNC MUSIC",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  }
+}
