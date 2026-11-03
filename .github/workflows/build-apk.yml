@@ -30,6 +30,10 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
+      - name: Install Android 36 SDK and Build Tools
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" || true
+
       - name: Install Dependencies
         run: npm ci
 
@@ -47,7 +51,8 @@ jobs:
 
       - name: Build Android Debug APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          ./gradlew assembleDebug --no-daemon 2>&1 | tee ../gradle.log || { echo "=== GRADLE ERROR ==="; tail -n 80 ../gradle.log; exit 1; }
 
       - name: Upload DNC MUSIC APK Artifact
         uses: actions/upload-artifact@v4
@@ -59,4 +64,4 @@ jobs:
         run: |
           cp android/app/build/outputs/apk/debug/app-debug.apk dnc-music.apk
           gh release delete v1.0.0 --cleanup-tag -y || true
-          gh release create v1.0.0 dnc-music.apk --title "DNC MUSIC v1.0.0 APK" --notes "DNC MUSIC Android Uygulamasını indirmek için dnc-music.apk dosyasına tıklayın."
+          gh release create v1.0.0 dnc-music.apk --title "DNC MUSIC v1.0.0 APK" --notes "DNC MUSIC Android Uygulamasını doğrudan indirmek için aşağıdaki dnc-music.apk dosyasına tıklayın."
