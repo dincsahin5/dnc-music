@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI: true
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout Code
@@ -28,10 +29,6 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '21'
-
-      - name: Install Android 36 SDK and Build Tools
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" || true
 
       - name: Install Dependencies
         run: npm ci
@@ -52,26 +49,14 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
-      - name: Copy APK to Root
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk dnc-music-v1.0.apk
-
       - name: Upload DNC MUSIC APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DNC-MUSIC-Debug-APK
-          path: dnc-music-v1.0.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Publish Official GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.0.0
-          name: "DNC MUSIC v1.0.0 (Android APK)"
-          body: |
-            ## 🎸 DNC MUSIC - Sahne & Repertuvar Sistemi
-            Müzisyenler için özel tasarlanmış profesyonel sahne konsolu ve repertuvar sistemi.
-            
-            ### 📲 İndirme:
-            Aşağıdaki **`dnc-music-v1.0.apk`** dosyasına tıklayarak doğrudan telefonunuza indirebilirsiniz!
-          files: dnc-music-v1.0.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish to GitHub Releases
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk dnc-music.apk
+          gh release delete v1.0.0 --cleanup-tag -y || true
+          gh release create v1.0.0 dnc-music.apk --title "DNC MUSIC v1.0.0 APK" --notes "DNC MUSIC Android Uygulamasını indirmek için dnc-music.apk dosyasına tıklayın."
